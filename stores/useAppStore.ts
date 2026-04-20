@@ -44,7 +44,7 @@ interface AppState {
   setError: (error: string | null) => void
 }
 
-export const useAppStore = create<AppState>((set, get) => ({
+export const useAppStore = create<AppState>()((set, get) => ({
   // ---- Auth ----
   profile: null,
   setProfile: (profile) => set({ profile }),
@@ -136,7 +136,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { error } = await supabase.from('phases').update(input).eq('id', id)
     if (error) { set({ error: error.message }); return }
     set((state) => ({
-      phases: state.phases.map((p) => (p.id === id ? { ...p, ...input } : p)),
+      phases: state.phases.map((p) => (p.id === id ? { ...p, ...(input as Partial<Phase>) } : p)),
     }))
   },
 
