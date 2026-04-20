@@ -1,12 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { BarChart3, Eye, EyeOff, Loader2, Lock, Mail } from 'lucide-react'
 
 export default function LoginPage() {
-  const router = useRouter()
   const supabase = createClient()
 
   const [email, setEmail]       = useState('')
@@ -20,11 +18,19 @@ export default function LoginPage() {
     setError(null)
     setLoading(true)
 
+    // Timeout 15s để tránh spinner treo vô hạn nếu Supabase không phản hồi
+    const timeoutId = setTimeout(() => {
+      setError('Kết nối tới máy chủ quá lâu. Vui lòng kiểm tra lại kết nối mạng hoặc thử lại sau.')
+      setLoading(false)
+    }, 15000)
+
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       })
+
+      clearTimeout(timeoutId)
 
       if (authError) {
         setError(authError.message || 'Email hoặc mật khẩu không đúng. Vui lòng thử lại.')
@@ -32,14 +38,23 @@ export default function LoginPage() {
         return
       }
 
-      // Đợi nửa giây để mã ẩn của Supabase kịp ghi thẻ Cookie vào trình duyệt rồi mới chuyển trang
-      setTimeout(() => {
-        router.push('/')
-      }, 500)
+      if (!data.session) {
+        setError('Không thể tạo phiên đăng nhập. Vui lòng thử lại.')
+        setLoading(false)
+        return
+      }
+
+      // Hard navigation: đảm bảo trình duyệt gửi cookie session mới cùng request
+      window.location.href = '/'
 
     } catch (err: any) {
-      console.error("Login Exception:", err)
-      setError('Lỗi kết nối máy chủ Supabase. Vui lòng kiểm tra lại cấu hình mạng hoặc biến môi trường.')
+      clearTimeout(timeoutId)
+      console.error('Login Exception:', err)
+      if (err?.message?.includes('Failed to fetch') || err?.message?.includes('NetworkError')) {
+        setError('Không thể kết nối tới máy chủ. Kiểm tra biến môi trường SUPABASE trên Vercel.')
+      } else {
+        setError(err?.message || 'Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.')
+      }
       setLoading(false)
     }
   }
