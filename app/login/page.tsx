@@ -32,8 +32,8 @@ export default function LoginPage() {
         return
       }
 
-      router.push('/')
-      router.refresh()
+      // Xoá router.push để tránh kẹt trạng thái của Next.js 
+      window.location.href = '/'
     } catch (err: any) {
       console.error("Login Exception:", err)
       setError('Lỗi kết nối máy chủ Supabase. Vui lòng kiểm tra lại cấu hình mạng hoặc biến môi trường.')
