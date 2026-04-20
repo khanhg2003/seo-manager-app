@@ -20,19 +20,25 @@ export default function LoginPage() {
     setError(null)
     setLoading(true)
 
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    })
+    try {
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      })
 
-    if (authError) {
-      setError('Email hoặc mật khẩu không đúng. Vui lòng thử lại.')
+      if (authError) {
+        setError(authError.message || 'Email hoặc mật khẩu không đúng. Vui lòng thử lại.')
+        setLoading(false)
+        return
+      }
+
+      router.push('/')
+      router.refresh()
+    } catch (err: any) {
+      console.error("Login Exception:", err)
+      setError('Lỗi kết nối máy chủ Supabase. Vui lòng kiểm tra lại cấu hình mạng hoặc biến môi trường.')
       setLoading(false)
-      return
     }
-
-    router.push('/')
-    router.refresh()
   }
 
   return (
