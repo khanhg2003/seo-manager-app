@@ -2,24 +2,21 @@
 
 import { useEffect, useState } from 'react'
 import { useAppStore } from '@/stores/useAppStore'
-import { createClient } from '@/lib/supabase/client'
 import {
-  Plus, Globe, BarChart3, Calendar, Loader2,
-  FolderOpen, MoreHorizontal, ArrowUpRight
+  Plus, Globe, BarChart3, Calendar,
+  Loader2, FolderOpen, ArrowUpRight
 } from 'lucide-react'
 import Link from 'next/link'
-import type { Project } from '@/types'
+import type { Project, CreateProjectInput } from '@/types'
+import { PROJECT_COLORS } from '@/types'
 
 function ProjectCard({ project }: { project: Project }) {
-  const completedPhases = 0 // placeholder
-  const totalPhases = 6
-
   const statusLabel: Record<string, string> = {
     active: 'Đang chạy',
     completed: 'Hoàn thành',
     paused: 'Tạm dừng',
   }
-  const statusColor: Record<string, string> = {
+  const statusClass: Record<string, string> = {
     active: 'badge-in_progress',
     completed: 'badge-done',
     paused: 'badge-todo',
@@ -30,7 +27,7 @@ function ProjectCard({ project }: { project: Project }) {
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <div
-            className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold shadow-sm"
+            className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold shadow-sm shrink-0"
             style={{ backgroundColor: project.color || '#3B82F6' }}
           >
             {project.name.charAt(0).toUpperCase()}
@@ -45,22 +42,19 @@ function ProjectCard({ project }: { project: Project }) {
             )}
           </div>
         </div>
-        <span className={`badge ${statusColor[project.status] ?? 'badge-todo'}`}>
+        <span className={`badge ${statusClass[project.status] ?? 'badge-todo'}`}>
           {statusLabel[project.status] ?? project.status}
         </span>
       </div>
 
-      {/* Progress */}
+      {/* Progress placeholder */}
       <div className="mb-4">
         <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
           <span>Tiến độ</span>
-          <span>{completedPhases}/{totalPhases} giai đoạn</span>
+          <span>0/6 giai đoạn</span>
         </div>
         <div className="progress-bar-track">
-          <div
-            className="progress-bar-fill bg-primary"
-            style={{ width: `${(completedPhases / totalPhases) * 100}%` }}
-          />
+          <div className="progress-bar-fill bg-primary" style={{ width: '0%' }} />
         </div>
       </div>
 
@@ -83,28 +77,29 @@ function ProjectCard({ project }: { project: Project }) {
 }
 
 export default function ProjectsPage() {
-  const { projects, fetchProjects, isLoading } = useAppStore()
+  const { projects, fetchProjects, isLoading, createProject } = useAppStore()
   const [showCreate, setShowCreate] = useState(false)
   const [newName, setNewName] = useState('')
   const [newDomain, setNewDomain] = useState('')
   const [creating, setCreating] = useState(false)
-  const { profile, createProject } = useAppStore()
-  const supabase = createClient()
 
   useEffect(() => {
     fetchProjects()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newName.trim()) return
     setCreating(true)
-    await createProject({
+
+    const input: CreateProjectInput = {
       name: newName.trim(),
       domain: newDomain.trim() || undefined,
-      color: `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`,
-    } as any)
+      color: PROJECT_COLORS[Math.floor(Math.random() * PROJECT_COLORS.length)],
+    }
+    await createProject(input)
+
     setNewName('')
     setNewDomain('')
     setShowCreate(false)
@@ -117,14 +112,9 @@ export default function ProjectsPage() {
       <div className="page-header">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Tất cả dự án</h1>
-          <p className="text-muted-foreground mt-1">
-            Quản lý tất cả dự án SEO của team
-          </p>
+          <p className="text-muted-foreground mt-1">Quản lý tất cả dự án SEO của team</p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="btn-primary"
-        >
+        <button onClick={() => setShowCreate(true)} className="btn-primary">
           <Plus className="w-4 h-4" />
           Tạo dự án mới
         </button>
@@ -132,7 +122,10 @@ export default function ProjectsPage() {
 
       {/* Create Modal */}
       {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowCreate(false) }}
+        >
           <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-md p-6 animate-fade-in">
             <h2 className="text-lg font-semibold mb-5">Tạo dự án mới</h2>
             <form onSubmit={handleCreate} className="space-y-4">
@@ -169,7 +162,7 @@ export default function ProjectsPage() {
                   disabled={creating || !newName.trim()}
                   className="btn-primary flex-1"
                 >
-                  {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  {creating && <Loader2 className="w-4 h-4 animate-spin" />}
                   Tạo dự án
                 </button>
               </div>

@@ -2,10 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import {
-  CheckSquare, Clock, AlertTriangle, CheckCircle2,
-  Loader2, Filter, Calendar
-} from 'lucide-react'
+import { CheckCircle2, Loader2, Calendar } from 'lucide-react'
 
 type Task = {
   id: string
@@ -50,7 +47,7 @@ export default function TasksPage() {
       }
 
       const { data } = await query
-      setTasks((data as Task[]) ?? [])
+      setTasks((data as unknown as Task[]) ?? [])
       setLoading(false)
     }
     loadTasks()
