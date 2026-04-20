@@ -32,8 +32,11 @@ export default function LoginPage() {
         return
       }
 
-      // Xoá router.push để tránh kẹt trạng thái của Next.js 
-      window.location.href = '/'
+      // Đợi nửa giây để mã ẩn của Supabase kịp ghi thẻ Cookie vào trình duyệt rồi mới chuyển trang
+      setTimeout(() => {
+        router.push('/')
+      }, 500)
+
     } catch (err: any) {
       console.error("Login Exception:", err)
       setError('Lỗi kết nối máy chủ Supabase. Vui lòng kiểm tra lại cấu hình mạng hoặc biến môi trường.')
