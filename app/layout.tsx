@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
+import { Toaster } from 'react-hot-toast'
+
 export default function RootLayout({
   children,
 }: {
@@ -26,6 +28,7 @@ export default function RootLayout({
     <html lang="vi" className={inter.variable}>
       <body className="bg-background text-foreground antialiased">
         {children}
+        <Toaster position="top-right" />
       </body>
     </html>
   )

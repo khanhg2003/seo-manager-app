@@ -221,18 +221,30 @@ export const useAppStore = create<AppState>()((set, get) => ({
     const profile = get().profile
     if (!profile) return null
 
+    // Chuẩn hóa assigned_to: Nếu là chuỗi rỗng thì chuyển thành null để tránh lỗi UUID
+    const normalizedInput = {
+      ...input,
+      assigned_to: input.assigned_to && input.assigned_to.trim() !== '' ? input.assigned_to : null,
+      created_by: profile.id
+    }
+
     const { data, error } = await supabase
       .from('tasks')
-      .insert({ ...input, created_by: profile.id })
+      .insert(normalizedInput)
       .select()
       .single()
 
-    if (error) { set({ error: error.message }); return null }
+    if (error) { 
+      console.error("Create task database error:", error)
+      set({ error: error.message })
+      return null 
+    }
 
-    // Refresh tasks
+    // Refresh tasks for current project to ensure Kanban is up to date
     if (get().selectedProject) {
       await get().fetchTasksByProject(get().selectedProject!.id)
     }
+    
     return data
   },
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { toast } from 'react-hot-toast'
 import { useAppStore } from '@/stores/useAppStore'
 import { 
   CheckCircle2, 
@@ -88,36 +89,67 @@ export default function TasksPage() {
       .order('created_at', { ascending: false })
 
     if (filterProject !== 'all') query = query.eq('project_id', filterProject)
-    if (filterPhase !== 'all') query = query.eq('phase_id', filterPhase)
     
-    // Logic: If on "My Tasks" page, filter by current user.
-    // However, the tab name is "Việc của tôi", so we should default assignee to current user.
-    if (filterAssignee !== 'all') {
-      query = query.eq('assigned_to', filterAssignee)
-    } else if (!isManager) {
-       // Force non-manager to see only their tasks even if filter is 'all' (though UI should prevent it)
-       query = query.eq('assigned_to', profile?.id)
-    }
+    setLoading(true)
+    try {
+      let query = supabase
+        .from('tasks')
+        .select(`
+          *,
+          projects(name),
+          phases(name),
+          assigned_profile:profiles!tasks_assigned_to_fkey(id, full_name, avatar_url, role)
+        `)
+        .order('created_at', { ascending: false })
 
-    if (filterPriority !== 'all') query = query.eq('priority', filterPriority)
-    
-    if (filterStatus === 'active') {
-      query = query.neq('status', 'done')
-    } else if (filterStatus === 'done') {
-      query = query.eq('status', 'done')
-    }
+      // Logic Filter logic theo phân quyền
+      if (filterAssignee !== 'all') {
+        query = query.eq('assigned_to', filterAssignee)
+      } else if (!isManager) {
+        // Assistant chỉ thấy task được giao cho mình nếu chọn 'Tất cả'
+        query = query.eq('assigned_to', profile.id)
+      }
 
-    const { data, error } = await query
-    if (!error && data) {
-      setTasks(data as unknown as TaskWithRelations[])
+      if (filterProject !== 'all') {
+        query = query.eq('project_id', filterProject)
+      }
+      
+      if (filterPhase !== 'all') query = query.eq('phase_id', filterPhase)
+      if (filterPriority !== 'all') query = query.eq('priority', filterPriority)
+      
+      if (filterStatus === 'active') {
+        query = query.neq('status', 'done')
+      } else if (filterStatus === 'done') {
+        query = query.eq('status', 'done')
+      }
+
+      const { data, error } = await query
+
+      if (error) {
+        toast.error("Không thể tải danh sách công việc")
+        console.error(error)
+      } else {
+        setTasks(data as unknown as TaskWithRelations[])
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   useEffect(() => {
-    loadTasks()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterProject, filterPhase, filterAssignee, filterPriority, filterStatus, profile])
+    if (profile) {
+      loadTasks()
+    }
+  }, [profile, filterProject, filterPhase, filterAssignee, filterPriority, filterStatus])
+
+  // Cập nhật filter mặc định khi profile load xong
+  useEffect(() => {
+    if (profile && !isManager) {
+      setFilterAssignee(profile.id)
+    }
+  }, [profile, isManager])
 
   return (
     <div className="animate-fade-in space-y-6">

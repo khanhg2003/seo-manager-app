@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAppStore } from '@/stores/useAppStore'
 import { KanbanBoard } from '@/components/dashboard/KanbanBoard'
-import { AddTaskModal } from '@/components/modals/AddTaskModal'
+import AddTaskModal from '@/components/modals/AddTaskModal'
 import { 
   ArrowLeft, 
   CheckCircle2, 
