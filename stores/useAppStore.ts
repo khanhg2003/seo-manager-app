@@ -77,11 +77,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
     if (error) { set({ error: error.message }); return null }
 
-    // Seed default 6 phases
-    await supabase.rpc('seed_default_phases', {
-      p_project_id: data.id,
-      p_created_by: profile.id,
-    })
+    // We DO NOT call seed_default_phases manually anymore.
+    // The Database TRIGGER `trigger_create_default_phases` automatically inserts 6 default phases 
+    // immediately when a project is inserted above.
 
     await get().fetchProjects()
     return data

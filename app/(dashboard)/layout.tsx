@@ -18,24 +18,27 @@ export default function DashboardLayout({
   useEffect(() => {
     async function initApp() {
       try {
-        // Thử lấy user nếu có session — không bắt buộc
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
-          const { data: profileData } = await supabase
+          const { data: profileData, error } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', user.id)
             .single()
 
-          if (profileData) {
+          if (!error && profileData) {
             setProfile(profileData)
+          } else {
+             console.error("No profile found for user:", user.id)
           }
+        } else {
+           // Should not happen as middleware redirect to login
+           window.location.href = '/login'
         }
-        // Load projects dù có session hay không
-        fetchProjects()
-      } catch {
-        // Không block nếu auth lỗi
-        fetchProjects()
+        
+        await fetchProjects()
+      } catch (err) {
+        console.error("Dashboard init error:", err)
       } finally {
         setInitializing(false)
       }
