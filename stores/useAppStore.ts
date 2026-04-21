@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast'
 import type {
   Profile, Project, Phase, Task, TaskWithRelations,
   PhaseWithTasks, ProjectWithPhases,
-  CreateProjectInput, CreatePhaseInput, CreateTaskInput, UpdateTaskInput,
+  CreateProjectInput, UpdateProjectInput, CreatePhaseInput, CreateTaskInput, UpdateTaskInput,
 } from '@/types'
 
 const supabase = createClient()
@@ -22,8 +22,8 @@ interface AppState {
   setSelectedProject: (project: Project | null) => void
   fetchProjects: () => Promise<void>
   createProject: (input: CreateProjectInput) => Promise<Project | null>
-  updateProject: (id: string, input: Partial<CreateProjectInput> & { status?: string }) => Promise<void>
-  deleteProject: (id: string) => Promise<void>
+  updateProject: (id: string, input: UpdateProjectInput) => Promise<void>
+  deleteProject: (id: string, options?: { onSuccess?: () => void }) => Promise<void>
 
   // Phases
   phases: Phase[]
@@ -102,14 +102,27 @@ export const useAppStore = create<AppState>()((set, get) => ({
       .update(input)
       .eq('id', id)
 
-    if (error) { set({ error: error.message }); return }
+    if (error) { 
+      toast.error(`Lỗi cập nhật dự án: ${error.message}`)
+      set({ error: error.message })
+      return 
+    }
+    
+    toast.success("Cập nhật dự án thành công!")
     await get().fetchProjects()
   },
 
-  deleteProject: async (id) => {
+  deleteProject: async (id, options) => {
     const { error } = await supabase.from('projects').delete().eq('id', id)
-    if (error) { set({ error: error.message }); return }
+    if (error) { 
+      toast.error(`Lỗi xóa dự án: ${error.message}`)
+      set({ error: error.message })
+      return 
+    }
+    
+    toast.success("Đã xóa dự án!")
     set((state) => ({ projects: state.projects.filter((p) => p.id !== id) }))
+    if (options?.onSuccess) options.onSuccess()
   },
 
   // ---- Phases ----
@@ -256,7 +269,13 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
   updateTask: async (id, input) => {
     const { error } = await supabase.from('tasks').update(input).eq('id', id)
-    if (error) { set({ error: error.message }); return }
+    if (error) { 
+      toast.error(`Lỗi cập nhật task: ${error.message}`)
+      set({ error: error.message })
+      return 
+    }
+    
+    toast.success("Cập nhật công việc thành công!")
     set((state) => ({
       tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...input } : t)),
     }))

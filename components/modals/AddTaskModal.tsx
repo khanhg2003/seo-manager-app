@@ -20,6 +20,7 @@ export default function AddTaskModal({ isOpen, onClose, projectId, phaseId }: Ad
   const [dueDate, setDueDate] = useState('')
   const [assignedTo, setAssignedTo] = useState<string>('')
   const [status, setStatus] = useState<'todo' | 'in_progress'>('todo')
+  const [outputUrl, setOutputUrl] = useState('')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -50,7 +51,8 @@ export default function AddTaskModal({ isOpen, onClose, projectId, phaseId }: Ad
         status: status,
         priority,
         due_date: dueDate ? new Date(dueDate).toISOString() : null,
-        assigned_to: assignedTo.trim() === '' ? null : assignedTo
+        assigned_to: assignedTo.trim() === '' ? null : assignedTo,
+        output_url: outputUrl.trim() === '' ? null : outputUrl.trim()
       })
 
       if (task) {
@@ -60,6 +62,7 @@ export default function AddTaskModal({ isOpen, onClose, projectId, phaseId }: Ad
         setDescription('')
         setDueDate('')
         setPriority('normal')
+        setOutputUrl('')
       } else {
         const errorMsg = useAppStore.getState().error || "Không rõ nguyên nhân"
         toast.error(`Lỗi tạo task: ${errorMsg}`)
@@ -168,18 +171,22 @@ export default function AddTaskModal({ isOpen, onClose, projectId, phaseId }: Ad
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="form-label text-sm font-medium">Trạng thái đầu</label>
-              <select
-                className="form-input w-full rounded-lg border border-input bg-white px-3 py-2 text-sm"
-                value={status}
-                onChange={(e) => setStatus(e.target.value as 'todo' | 'in_progress')}
-                disabled={loading}
-              >
-                <option value="todo">Cần làm (Todo)</option>
-                <option value="in_progress">Đang làm</option>
-              </select>
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="form-label flex items-center gap-2 text-sm font-medium text-primary">
+              Link Output (Báo cáo kết quả)
+            </label>
+            <input
+              type="url"
+              className="form-input w-full rounded-lg border border-input bg-white px-3 py-2.5 text-sm"
+              placeholder="https://docs.google.com/spreadsheets/..."
+              value={outputUrl}
+              onChange={(e) => setOutputUrl(e.target.value)}
+              disabled={loading}
+            />
+            <p className="text-[10px] text-muted-foreground italic">Link tài liệu, bài viết hoặc báo cáo của công việc này.</p>
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-border mt-6">

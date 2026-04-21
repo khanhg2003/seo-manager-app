@@ -27,6 +27,8 @@ export interface Project {
   id: string
   name: string
   domain: string | null
+  website_url: string | null
+  google_sheet_id: string | null
   description: string | null
   status: ProjectStatus
   color: string
@@ -61,6 +63,7 @@ export interface Task {
   assigned_to: string | null
   created_by: string | null
   due_date: string | null
+  output_url: string | null
   order_index: number
   created_at: string
   updated_at: string
@@ -101,8 +104,20 @@ export interface ProjectWithPhases extends Project {
 export interface CreateProjectInput {
   name: string
   domain?: string
+  website_url?: string
+  google_sheet_id?: string
   description?: string
   color: string
+}
+
+export interface UpdateProjectInput {
+  name?: string
+  domain?: string
+  website_url?: string
+  google_sheet_id?: string
+  description?: string
+  status?: ProjectStatus
+  color?: string
 }
 
 export interface CreatePhaseInput {
@@ -122,6 +137,7 @@ export interface CreateTaskInput {
   priority?: TaskPriority
   assigned_to?: string | null
   due_date?: string | null
+  output_url?: string | null
 }
 
 export interface UpdateTaskInput {
@@ -131,6 +147,7 @@ export interface UpdateTaskInput {
   priority?: TaskPriority
   assigned_to?: string | null
   due_date?: string | null
+  output_url?: string | null
   phase_id?: string
   order_index?: number
   is_reviewed?: boolean
