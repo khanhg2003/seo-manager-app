@@ -47,15 +47,35 @@ function ProjectCard({ project }: { project: Project }) {
         </span>
       </div>
 
-      {/* Progress placeholder */}
+      {/* Progress Calculation */}
       <div className="mb-4">
-        <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
-          <span>Tiến độ</span>
-          <span>0/6 giai đoạn</span>
-        </div>
-        <div className="progress-bar-track">
-          <div className="progress-bar-fill bg-primary" style={{ width: '0%' }} />
-        </div>
+        {(() => {
+          const phases = (project as any).phases || []
+          const allTasks = phases.flatMap((ph: any) => ph.tasks || [])
+          const completedPhases = phases.filter((ph: any) => ph.status === 'completed').length
+          const totalTasks = allTasks.length
+          const doneTasks = allTasks.filter((t: any) => t.status === 'done').length
+          const progressPercent = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : (phases.length > 0 ? Math.round((completedPhases / phases.length) * 100) : 0)
+          
+          return (
+            <>
+              <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
+                <span>Tiến độ tổng thể</span>
+                <span>{progressPercent}%</span>
+              </div>
+              <div className="progress-bar-track h-1.5 bg-secondary">
+                <div 
+                  className="progress-bar-fill bg-primary h-full transition-all duration-700 shadow-[0_0_10px_rgba(var(--primary-rgb),0.3)]" 
+                  style={{ width: `${progressPercent}%` }} 
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-2 flex justify-between">
+                <span>{completedPhases}/{phases.length} giai đoạn hoàn tất</span>
+                <span>{doneTasks}/{totalTasks} công việc xong</span>
+              </p>
+            </>
+          )
+        })()}
       </div>
 
       {/* Footer */}

@@ -30,6 +30,7 @@ interface AppState {
   createPhase: (input: CreatePhaseInput) => Promise<Phase | null>
   updatePhase: (id: string, input: Partial<CreatePhaseInput> & { status?: string }) => Promise<void>
   approvePhase: (phaseId: string) => Promise<void>
+  reopenPhase: (phaseId: string) => Promise<void>
   deletePhase: (id: string) => Promise<void>
 
   // Tasks
@@ -67,11 +68,11 @@ export const useAppStore = create<AppState>()((set, get) => ({
     set({ isLoading: true, error: null })
     const { data, error } = await supabase
       .from('projects')
-      .select('*')
+      .select('*, phases(id, status, tasks(id, status))')
       .order('created_at', { ascending: false })
 
     if (error) { set({ error: error.message, isLoading: false }); return }
-    set({ projects: data ?? [], isLoading: false })
+    set({ projects: (data ?? []) as any, isLoading: false })
   },
 
   createProject: async (input) => {
@@ -160,6 +161,26 @@ export const useAppStore = create<AppState>()((set, get) => ({
         status: 'completed',
         approved_by: profile.id,
         approved_at: new Date().toISOString(),
+      })
+      .eq('id', phaseId)
+
+    if (error) { set({ error: error.message }); return }
+    await get().fetchPhases(get().selectedProject?.id ?? '')
+  },
+
+  reopenPhase: async (phaseId) => {
+    const profile = get().profile
+    if (!profile || profile.role !== 'manager') {
+      set({ error: 'Chỉ Manager mới có quyền mở lại Phase' })
+      return
+    }
+
+    const { error } = await supabase
+      .from('phases')
+      .update({
+        status: 'active',
+        approved_by: null,
+        approved_at: null,
       })
       .eq('id', phaseId)
 

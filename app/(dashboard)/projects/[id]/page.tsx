@@ -27,6 +27,7 @@ export default function ProjectDetailsPage() {
     fetchPhases, 
     fetchTasksByProject,
     approvePhase,
+    reopenPhase,
     selectedProject,
     setSelectedProject,
     isLoading
@@ -35,6 +36,7 @@ export default function ProjectDetailsPage() {
   const [activePhaseId, setActivePhaseId] = useState<string | null>(null)
   const [initing, setIniting] = useState(true)
   const [approving, setApproving] = useState(false)
+  const [reopening, setReopening] = useState(false)
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
 
   // Initialize data for this specific project
@@ -97,6 +99,14 @@ export default function ProjectDetailsPage() {
     setApproving(true)
     await approvePhase(activePhaseId)
     setApproving(false)
+  }
+
+  const handleReopen = async () => {
+    if (!activePhaseId) return
+    if (!confirm("Bạn có chắc chắn muốn mở lại Phase này?")) return
+    setReopening(true)
+    await reopenPhase(activePhaseId)
+    setReopening(false)
   }
 
   return (
@@ -199,23 +209,66 @@ export default function ProjectDetailsPage() {
             )}
           </div>
           
-          {/* Nút Approve Phase cho Manager */}
-          {activePhase.status !== 'completed' && (
-            isManager ? (
-              <button 
-                onClick={handleApprove}
-                disabled={approving}
-                className="btn-primary bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20 shadow-lg"
-              >
-                {approving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                Duyệt & Đóng Phase
-              </button>
+          {/* Nút Action cho Phase */}
+          <div className="flex items-center gap-3">
+            {activePhase.status === 'completed' ? (
+              isManager && (
+                <button 
+                  onClick={handleReopen}
+                  disabled={reopening}
+                  className="btn-secondary border-amber-500/50 text-amber-600 hover:bg-amber-50 flex items-center gap-2"
+                >
+                  {reopening ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+                  Mở lại Phase
+                </button>
+              )
             ) : (
-              <div className="px-3 py-1.5 rounded-md bg-secondary/80 flex items-center gap-2 text-xs font-medium text-muted-foreground border border-border" title="Chỉ Manager mới có quyền duyệt phase này">
-                <Lock className="w-3 h-3" /> Chờ Manager duyệt
-              </div>
-            )
-          )}
+              isManager ? (
+                <button 
+                  onClick={handleApprove}
+                  disabled={approving}
+                  className="btn-primary bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20 shadow-lg"
+                >
+                  {approving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                  Duyệt & Đóng Phase
+                </button>
+              ) : (
+                <div className="px-3 py-1.5 rounded-md bg-secondary/80 flex items-center gap-2 text-xs font-medium text-muted-foreground border border-border" title="Chỉ Manager mới có quyền duyệt phase này">
+                  <Lock className="w-3 h-3" /> Chờ Manager duyệt
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Progress Bar for Active Phase */}
+      {activePhase && (
+        <div className="px-1">
+          <div className="flex justify-between items-end mb-2">
+            <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Tiến độ giai đoạn</span>
+            <span className="text-sm font-bold text-primary">
+              {(() => {
+                const phaseTasks = useAppStore.getState().tasks.filter(t => t.phase_id === activePhase.id)
+                if (phaseTasks.length === 0) return activePhase.status === 'completed' ? '100%' : '0%'
+                const done = phaseTasks.filter(t => t.status === 'done').length
+                return Math.round((done / phaseTasks.length) * 100) + '%'
+              })()}
+            </span>
+          </div>
+          <div className="progress-bar-track h-2 bg-secondary shadow-inner">
+            <div 
+              className="progress-bar-fill bg-primary h-full transition-all duration-500 shadow-lg shadow-primary/20" 
+              style={{ 
+                width: (() => {
+                  const phaseTasks = useAppStore.getState().tasks.filter(t => t.phase_id === activePhase.id)
+                  if (phaseTasks.length === 0) return activePhase.status === 'completed' ? '100' : '0'
+                  const done = phaseTasks.filter(t => t.status === 'done').length
+                  return Math.round((done / phaseTasks.length) * 100)
+                })() + '%' 
+              }} 
+            />
+          </div>
         </div>
       )}
 

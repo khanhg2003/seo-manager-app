@@ -10,6 +10,7 @@ import { cn, formatDate } from '@/lib/utils'
 
 // Task Card Component
 function TaskCard({ task }: { task: TaskWithRelations }) {
+  const { moveTask } = useAppStore()
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
     data: {
@@ -36,9 +37,34 @@ function TaskCard({ task }: { task: TaskWithRelations }) {
     >
       <div className="flex justify-between items-start mb-2 gap-2">
         <h4 className="text-sm font-semibold text-foreground line-clamp-2">{task.title}</h4>
-        <button className="text-muted-foreground hover:text-foreground">
-          <MoreHorizontal className="w-4 h-4" />
-        </button>
+        <div className="relative group/menu">
+          <button className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-secondary transition-colors">
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
+          <div className="absolute right-0 top-full mt-1 w-40 bg-card border border-border rounded-lg shadow-xl py-1 z-[60] hidden group-hover/menu:block">
+            <p className="px-3 py-1 text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-b border-border mb-1">Cập nhật trạng thái</p>
+            {(Object.entries(STATUS_LABELS) as [TaskStatus, string][]).map(([status, label]) => (
+              <button
+                key={status}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  moveTask(task.id, status)
+                }}
+                className={cn(
+                  "w-full text-left px-3 py-1.5 text-xs hover:bg-secondary transition-colors flex items-center gap-2",
+                  task.status === status ? "text-primary font-bold bg-primary/5" : "text-foreground"
+                )}
+              >
+                <div className={cn("w-1.5 h-1.5 rounded-full", 
+                  status === 'todo' ? "bg-gray-400" : 
+                  status === 'in_progress' ? "bg-blue-500" : 
+                  status === 'in_review' ? "bg-amber-500" : "bg-emerald-500"
+                )} />
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
       
       {task.description && (

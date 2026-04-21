@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAppStore } from '@/stores/useAppStore'
 import { X, Loader2, Calendar, FolderGit2 } from 'lucide-react'
-import { TaskStatus, TaskPriority, STATUS_LABELS } from '@/types'
+import { TaskStatus, TaskPriority, STATUS_LABELS, Profile } from '@/types'
 
 export function AddTaskModal({ 
   isOpen, 
@@ -14,7 +14,7 @@ export function AddTaskModal({
   projectId: string
   phaseId: string 
 }) {
-  const { createTask, profile, phases } = useAppStore()
+  const { createTask, profile, phases, teamMembers, fetchTeamMembers } = useAppStore()
   
   const [loading, setLoading] = useState(false)
   const [title, setTitle] = useState('')
@@ -22,6 +22,17 @@ export function AddTaskModal({
   const [priority, setPriority] = useState<TaskPriority>('normal')
   const [status, setStatus] = useState<TaskStatus>('todo')
   const [dueDate, setDueDate] = useState('')
+  const [assignedTo, setAssignedTo] = useState<string>(profile?.id || '')
+
+  // Load team members if not loaded
+  useState(() => {
+    if (teamMembers.length === 0) {
+      fetchTeamMembers()
+    }
+    if (profile && !assignedTo) {
+      setAssignedTo(profile.id)
+    }
+  })
   
   if (!isOpen) return null
 
@@ -40,7 +51,7 @@ export function AddTaskModal({
       status: status,
       priority,
       due_date: dueDate ? new Date(dueDate).toISOString() : null,
-      assigned_to: profile?.id // Giao mặc định cho người tạo
+      assigned_to: assignedTo || profile?.id || null
     })
     
     setLoading(false)
@@ -124,6 +135,25 @@ export function AddTaskModal({
                 ))}
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1.5 flex items-center gap-2">
+              Người thực hiện <span className="text-red-500">*</span>
+            </label>
+            <select 
+              required
+              className="w-full bg-background border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground min-h-[42px]"
+              value={assignedTo}
+              onChange={e => setAssignedTo(e.target.value)}
+            >
+              <option value="">-- Chọn người thực hiện --</option>
+              {teamMembers.map((member: Profile) => (
+                <option key={member.id} value={member.id}>
+                  {member.full_name} ({member.role === 'manager' ? 'Manager' : 'Assistant'})
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
