@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { createClient } from '@/lib/supabase/client'
+import { toast } from 'react-hot-toast'
 import type {
   Profile, Project, Phase, Task, TaskWithRelations,
   PhaseWithTasks, ProjectWithPhases,
@@ -203,8 +204,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
       .from('tasks')
       .select(`
         *,
-        assigned_profile:profiles!tasks_assigned_to_fkey(id, full_name, avatar_url, role),
-        created_profile:profiles!tasks_created_by_fkey(id, full_name, role)
+        assigned_profile:profiles!tasks_assigned_to_fkey(id, full_name, avatar_url, role)
       `)
       .eq('project_id', projectId)
       .is('parent_id', null) // Only root tasks on kanban
@@ -224,7 +224,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
     // Chuẩn hóa assigned_to: Nếu là chuỗi rỗng thì chuyển thành null để tránh lỗi UUID
     const normalizedInput = {
       ...input,
-      assigned_to: input.assigned_to && input.assigned_to.trim() !== '' ? input.assigned_to : null,
+      assigned_to: (input.assigned_to && input.assigned_to.trim() !== '') ? input.assigned_to : null,
       created_by: profile.id
     }
 
@@ -236,6 +236,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
     if (error) { 
       console.error("Create task database error:", error)
+      toast.error(error.message)
       set({ error: error.message })
       return null 
     }

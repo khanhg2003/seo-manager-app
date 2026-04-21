@@ -78,18 +78,6 @@ export default function TasksPage() {
     const { createClient } = await import('@/lib/supabase/client')
     const supabase = createClient()
 
-    let query = supabase
-      .from('tasks')
-      .select(`
-        *,
-        projects(name),
-        phases(name),
-        assigned_profile:profiles!tasks_assigned_to_fkey(id, full_name, avatar_url, role)
-      `)
-      .order('created_at', { ascending: false })
-
-    if (filterProject !== 'all') query = query.eq('project_id', filterProject)
-    
     setLoading(true)
     try {
       let query = supabase

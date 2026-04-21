@@ -50,7 +50,7 @@ export default function AddTaskModal({ isOpen, onClose, projectId, phaseId }: Ad
         status: status,
         priority,
         due_date: dueDate ? new Date(dueDate).toISOString() : null,
-        assigned_to: assignedTo
+        assigned_to: assignedTo.trim() === '' ? null : assignedTo
       })
 
       if (task) {
