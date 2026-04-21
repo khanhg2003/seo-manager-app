@@ -184,7 +184,13 @@ export default function DashboardPage() {
                 </h3>
                 <p className="text-xs text-muted-foreground font-medium mb-5 flex items-center gap-1">
                   <ExternalLink className="w-3 h-3" />
-                  {project.domain || 'Chưa gắn domain'}
+                  {project.website_url ? (
+                    <a href={project.website_url} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors underline-offset-2 hover:underline">
+                      {project.website_url.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                    </a>
+                  ) : (
+                    'Chưa gắn Website'
+                  )}
                 </p>
 
                 <div className="space-y-2">

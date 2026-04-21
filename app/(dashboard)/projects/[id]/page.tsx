@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import ProjectSettingsModal from '@/components/modals/ProjectSettingsModal'
 
 export default function ProjectDetailsPage() {
   const { id } = useParams()
@@ -38,6 +39,7 @@ export default function ProjectDetailsPage() {
   const [approving, setApproving] = useState(false)
   const [reopening, setReopening] = useState(false)
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
 
   // Initialize data for this specific project
   useEffect(() => {
@@ -136,7 +138,7 @@ export default function ProjectDetailsPage() {
         <div className="flex items-center gap-3">
           <button 
             className="btn-secondary" 
-            onClick={() => alert("Chức năng cài đặt Dự án sẽ sớm được ra mắt!")}
+            onClick={() => setIsSettingsModalOpen(true)}
           >
             <Settings2 className="w-4 h-4" /> Cài đặt
           </button>
@@ -287,6 +289,12 @@ export default function ProjectDetailsPage() {
         onClose={() => setIsTaskModalOpen(false)}
         projectId={selectedProject.id}
         phaseId={activePhaseId || ''}
+      />
+
+      <ProjectSettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        project={selectedProject}
       />
     </div>
   )

@@ -109,7 +109,7 @@ export default function ProjectSettingsModal({ isOpen, onClose, project }: Proje
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="overflow-y-auto p-6 space-y-6">
+        <form id="project-settings-form" onSubmit={handleSubmit} className="overflow-y-auto p-6 space-y-6">
           {/* General Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
@@ -238,7 +238,8 @@ export default function ProjectSettingsModal({ isOpen, onClose, project }: Proje
             Hủy
           </button>
           <button
-            onClick={handleSubmit}
+            type="submit"
+            form="project-settings-form"
             className="px-10 py-2 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2"
             disabled={loading || deleting}
           >

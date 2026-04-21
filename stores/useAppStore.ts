@@ -41,6 +41,8 @@ interface AppState {
   updateTask: (id: string, input: UpdateTaskInput) => Promise<void>
   deleteTask: (id: string) => Promise<void>
   moveTask: (taskId: string, newStatus: string) => Promise<void>
+  approveTask: (taskId: string) => Promise<void>
+  rejectTask: (taskId: string, reason: string) => Promise<void>
 
   // UI state
   isLoading: boolean
