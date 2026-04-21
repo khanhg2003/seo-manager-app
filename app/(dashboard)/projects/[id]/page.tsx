@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAppStore } from '@/stores/useAppStore'
 import { KanbanBoard } from '@/components/dashboard/KanbanBoard'
+import { AddTaskModal } from '@/components/modals/AddTaskModal'
 import { 
   ArrowLeft, 
   CheckCircle2, 
@@ -34,6 +35,7 @@ export default function ProjectDetailsPage() {
   const [activePhaseId, setActivePhaseId] = useState<string | null>(null)
   const [initing, setIniting] = useState(true)
   const [approving, setApproving] = useState(false)
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
 
   // Initialize data for this specific project
   useEffect(() => {
@@ -122,10 +124,22 @@ export default function ProjectDetailsPage() {
         </div>
         
         <div className="flex items-center gap-3">
-          <button className="btn-secondary">
+          <button 
+            className="btn-secondary" 
+            onClick={() => alert("Chức năng cài đặt Dự án sẽ sớm được ra mắt!")}
+          >
             <Settings2 className="w-4 h-4" /> Cài đặt
           </button>
-          <button className="btn-primary">
+          <button 
+            className="btn-primary"
+            onClick={() => {
+               if (!activePhaseId) {
+                 alert("Vui lòng chọn 1 Phase trước khi thêm task!")
+                 return
+               }
+               setIsTaskModalOpen(true)
+            }}
+          >
             <Plus className="w-4 h-4" /> Thêm Task
           </button>
         </div>
@@ -154,7 +168,7 @@ export default function ProjectDetailsPage() {
                   </span>
                 ) : (
                   <span className="text-[10px] text-blue-500 font-bold bg-blue-500/10 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <Loader2 className="w-3 h-3 animate-spin" /> Đang chạy
+                    <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" /> Đang chạy
                   </span>
                 )}
               </div>
@@ -214,6 +228,13 @@ export default function ProjectDetailsPage() {
         </div>
       )}
 
+      {/* Modals */}
+      <AddTaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => setIsTaskModalOpen(false)}
+        projectId={selectedProject.id}
+        phaseId={activePhaseId || ''}
+      />
     </div>
   )
 }
