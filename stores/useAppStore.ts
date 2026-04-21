@@ -9,9 +9,11 @@ import type {
 const supabase = createClient()
 
 interface AppState {
-  // Auth
+  // Auth & Team
   profile: Profile | null
   setProfile: (profile: Profile | null) => void
+  teamMembers: Profile[]
+  fetchTeamMembers: () => Promise<void>
 
   // Projects
   projects: Project[]
@@ -45,9 +47,16 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>()((set, get) => ({
-  // ---- Auth ----
+  // ---- Auth & Team ----
   profile: null,
   setProfile: (profile) => set({ profile }),
+  teamMembers: [],
+  fetchTeamMembers: async () => {
+    const { data, error } = await supabase.from('profiles').select('*')
+    if (!error && data) {
+      set({ teamMembers: data })
+    }
+  },
 
   // ---- Projects ----
   projects: [],
