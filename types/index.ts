@@ -64,6 +64,7 @@ export interface Task {
   order_index: number
   created_at: string
   updated_at: string
+  is_reviewed: boolean
 }
 
 export interface TaskComment {
@@ -132,6 +133,7 @@ export interface UpdateTaskInput {
   due_date?: string | null
   phase_id?: string
   order_index?: number
+  is_reviewed?: boolean
 }
 
 // ---- Status/Priority Labels (Vietnamese) ----

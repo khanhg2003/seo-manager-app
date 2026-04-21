@@ -284,6 +284,42 @@ export const useAppStore = create<AppState>()((set, get) => ({
     }
   },
 
+  approveTask: async (taskId) => {
+    const { error } = await supabase
+      .from('tasks')
+      .update({ is_reviewed: true })
+      .eq('id', taskId)
+
+    if (error) {
+      set({ error: error.message })
+      return
+    }
+
+    // Refresh projects to update progress if needed
+    await get().fetchProjects()
+  },
+
+  rejectTask: async (taskId, reason) => {
+    const task = get().tasks.find(t => t.id === taskId)
+    const newDescription = `[YÊU CẦU SỬA]: ${reason}\n\n${task?.description || ''}`
+
+    const { error } = await supabase
+      .from('tasks')
+      .update({ 
+        status: 'in_progress',
+        description: newDescription,
+        is_reviewed: false 
+      })
+      .eq('id', taskId)
+
+    if (error) {
+      set({ error: error.message })
+      return
+    }
+
+    await get().fetchProjects()
+  },
+
   // ---- UI ----
   isLoading: false,
   error: null,
