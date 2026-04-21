@@ -178,7 +178,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
       `)
       .eq('project_id', projectId)
       .is('parent_id', null) // Only root tasks on kanban
-      .order('order_index', { ascending: true })
+      .order('created_at', { ascending: true })
 
     if (phaseId) query = query.eq('phase_id', phaseId)
 
