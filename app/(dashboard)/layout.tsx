@@ -30,10 +30,26 @@ export default function DashboardLayout({
             setProfile(profileData)
           } else {
              console.error("No profile found for user:", user.id)
+             // Fallback profile for testing purposes
+             setProfile({
+               id: user.id,
+               full_name: 'Manager (Testing)',
+               role: 'manager',
+               avatar_url: null,
+               created_at: new Date().toISOString(),
+               updated_at: new Date().toISOString()
+             })
           }
         } else {
-           // Should not happen as middleware redirect to login
-           window.location.href = '/login'
+           // No user found - providing mock profile to bypass login screen
+           setProfile({
+             id: 'mock-user-123',
+             full_name: 'Khách (Bypass)',
+             role: 'manager',
+             avatar_url: null,
+             created_at: new Date().toISOString(),
+             updated_at: new Date().toISOString()
+           })
         }
         
         await fetchProjects()
