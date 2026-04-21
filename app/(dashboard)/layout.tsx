@@ -43,7 +43,7 @@ export default function DashboardLayout({
         } else {
            // No user found - providing mock profile to bypass login screen
            setProfile({
-             id: 'mock-user-123',
+             id: '00000000-0000-0000-0000-000000000000',
              full_name: 'Khách (Bypass)',
              role: 'manager',
              avatar_url: null,
