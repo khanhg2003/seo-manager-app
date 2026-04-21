@@ -86,7 +86,7 @@ export default function TasksPage() {
           *,
           projects(name),
           phases(name),
-          assigned_profile:profiles!tasks_assigned_to_fkey(id, full_name, avatar_url, role)
+          assigned_profile:profiles(id, full_name, avatar_url, role)
         `)
         .order('created_at', { ascending: false })
 
@@ -114,8 +114,8 @@ export default function TasksPage() {
       const { data, error } = await query
 
       if (error) {
-        toast.error("Không thể tải danh sách công việc")
-        console.error(error)
+        console.error("loadTasks query error:", error)
+        toast.error(error.message || "Lỗi không xác định từ Supabase")
       } else {
         setTasks(data as unknown as TaskWithRelations[])
       }

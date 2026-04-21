@@ -204,7 +204,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
       .from('tasks')
       .select(`
         *,
-        assigned_profile:profiles!tasks_assigned_to_fkey(id, full_name, avatar_url, role)
+        assigned_profile:profiles(id, full_name, avatar_url, role)
       `)
       .eq('project_id', projectId)
       .is('parent_id', null) // Only root tasks on kanban
@@ -213,7 +213,12 @@ export const useAppStore = create<AppState>()((set, get) => ({
     if (phaseId) query = query.eq('phase_id', phaseId)
 
     const { data, error } = await query
-    if (error) { set({ error: error.message, isLoading: false }); return }
+    if (error) { 
+      console.error("fetchTasksByProject error:", error)
+      toast.error(error.message || "Lỗi không xác định từ Supabase")
+      set({ error: error.message, isLoading: false })
+      return 
+    }
     set({ tasks: (data ?? []) as TaskWithRelations[], isLoading: false })
   },
 
