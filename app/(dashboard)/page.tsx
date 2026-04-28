@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAppStore } from '@/stores/useAppStore'
-import { 
-  BarChart3, 
-  FileSearch, 
-  AlertTriangle, 
+import {
+  BarChart3,
+  FileSearch,
+  AlertTriangle,
   Plus,
   RefreshCw,
   CheckCircle2,
@@ -26,7 +26,7 @@ import { vi } from 'date-fns/locale'
 export default function DashboardPage() {
   const supabase = createClient()
   const { profile, projects, fetchProjects, approveTask, rejectTask } = useAppStore()
-  
+
   const [reviewTasks, setReviewTasks] = useState<TaskWithRelations[]>([])
   const [loading, setLoading] = useState(true)
   const [rejectingTaskId, setRejectingTaskId] = useState<string | null>(null)
@@ -38,9 +38,28 @@ export default function DashboardPage() {
       // 1. Fetch Projects (stats are calculated from this)
       await fetchProjects()
 
-      // 2. Fetch Tasks for Approval Section
-      // Logic: assigned_to != current manager AND status in [done, in_review] AND is_reviewed = false
+      // Fetch SEO metrics over all active projects efficiently
+      // Note: We don't have a direct global fetchSeoMetrics in store, 
+      // but we can query them directly here for dashboard visualization
       if (profile) {
+        const { data: seoData } = await supabase
+          .from('project_seo_metrics')
+          .select('project_id, articles_count, gsc_traffic')
+
+        if (seoData) {
+          // Attach seo stats locally to projects for rendering
+          useAppStore.setState(state => {
+            const projectsWithSeo = state.projects.map(p => {
+              const projectSeos = seoData.filter(s => s.project_id === p.id)
+              const totalArticles = projectSeos.reduce((sum, s) => sum + (s.articles_count || 0), 0)
+              const totalTraffic = projectSeos.reduce((sum, s) => sum + (s.gsc_traffic || 0), 0)
+              return { ...p, totalArticles, totalTraffic }
+            })
+            return { projects: projectsWithSeo }
+          })
+        }
+
+        // 2. Fetch Tasks for Approval Section
         let query = supabase
           .from('tasks')
           .select(`
@@ -84,7 +103,7 @@ export default function DashboardPage() {
 
   const handleRejectSubmit = async () => {
     if (!rejectingTaskId || !rejectReason.trim()) return
-    
+
     try {
       await rejectTask(rejectingTaskId, rejectReason.trim())
       toast.success("Đã gửi yêu cầu sửa đổi")
@@ -125,7 +144,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={loadDashboardData}
             className="btn-secondary h-11 px-5 shadow-sm border-border/50 bg-background/50 backdrop-blur-sm"
             disabled={loading}
@@ -156,17 +175,17 @@ export default function DashboardPage() {
           {projects.slice(0, 4).map((project) => {
             const progress = calculateProgress(project)
             const lagging = isLagging(project, progress)
-            
+
             return (
               <div key={project.id} className="glass-card group hover:border-primary/30 transition-all duration-300 p-6 relative overflow-hidden">
                 {/* Background Decor */}
-                <div 
+                <div
                   className="absolute -right-4 -top-4 w-24 h-24 rounded-full opacity-5 group-hover:opacity-10 transition-opacity"
                   style={{ backgroundColor: project.color }}
                 />
 
                 <div className="flex justify-between items-start mb-4">
-                  <div 
+                  <div
                     className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold shadow-sm"
                     style={{ backgroundColor: project.color }}
                   >
@@ -182,7 +201,7 @@ export default function DashboardPage() {
                 <h3 className="font-bold text-lg leading-tight mb-1 truncate" title={project.name}>
                   {project.name}
                 </h3>
-                <p className="text-xs text-muted-foreground font-medium mb-5 flex items-center gap-1">
+                <p className="text-xs text-muted-foreground font-medium mb-3 flex items-center gap-1">
                   <ExternalLink className="w-3 h-3" />
                   {project.website_url ? (
                     <a href={project.website_url} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors underline-offset-2 hover:underline">
@@ -193,21 +212,33 @@ export default function DashboardPage() {
                   )}
                 </p>
 
+                {/* SEO Mini Stats */}
+                <div className="flex gap-4 mb-4 mt-2">
+                  <div className="flex-1 bg-secondary/30 rounded-lg p-2 text-center border shadow-sm">
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase mb-0.5">Traffic GSC</p>
+                    <p className="text-sm font-black text-emerald-500">{(project as any).totalTraffic?.toLocaleString() || 0}</p>
+                  </div>
+                  <div className="flex-1 bg-secondary/30 rounded-lg p-2 text-center border shadow-sm">
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase mb-0.5">Bài viết SEO</p>
+                    <p className="text-sm font-black text-blue-500">{(project as any).totalArticles?.toLocaleString() || 0}</p>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm font-bold">
-                    <span>Hoàn thành</span>
+                    <span>Hoàn thành (C.Việc)</span>
                     <span className={progress < 30 ? 'text-red-500' : 'text-primary'}>{progress}%</span>
                   </div>
                   <div className="h-2.5 w-full bg-secondary rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className={`h-full transition-all duration-1000 ${progress < 30 ? 'bg-red-500' : 'bg-primary'}`}
                       style={{ width: `${progress}%` }}
                     />
                   </div>
                 </div>
 
-                <Link 
-                  href={`/projects/${project.id}`} 
+                <Link
+                  href={`/projects/${project.id}`}
                   className="mt-5 w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-secondary/50 hover:bg-secondary text-xs font-bold transition-colors"
                 >
                   Chi tiết dự án
@@ -271,11 +302,11 @@ export default function DashboardPage() {
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        <span 
+                        <span
                           className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border"
-                          style={{ 
-                            borderColor: (task.projects as any)?.color + '40', 
-                            color: (task.projects as any)?.color ,
+                          style={{
+                            borderColor: (task.projects as any)?.color + '40',
+                            color: (task.projects as any)?.color,
                             backgroundColor: (task.projects as any)?.color + '10'
                           }}
                         >
@@ -289,7 +320,7 @@ export default function DashboardPage() {
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center justify-end gap-2">
-                          <button 
+                          <button
                             onClick={() => handleApprove(task.id)}
                             className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-lg transition-all shadow-sm flex items-center gap-1.5 px-3 text-xs font-bold"
                             title="Phê duyệt công việc"
@@ -297,7 +328,7 @@ export default function DashboardPage() {
                             <CheckCircle2 className="w-4 h-4" />
                             Duyệt
                           </button>
-                          <button 
+                          <button
                             onClick={() => setRejectingTaskId(task.id)}
                             className="p-2 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-lg transition-all shadow-sm flex items-center gap-1.5 px-3 text-xs font-bold"
                             title="Yêu cầu sửa lại"
@@ -335,13 +366,13 @@ export default function DashboardPage() {
               onChange={(e) => setRejectReason(e.target.value)}
             />
             <div className="flex items-center justify-end gap-3 mt-6">
-              <button 
+              <button
                 onClick={() => { setRejectingTaskId(null); setRejectReason('') }}
                 className="btn-secondary h-11 px-6 font-bold"
               >
                 Hủy
               </button>
-              <button 
+              <button
                 onClick={handleRejectSubmit}
                 disabled={!rejectReason.trim()}
                 className="btn-primary h-11 px-6 bg-red-600 hover:bg-red-700 font-bold disabled:opacity-50"
