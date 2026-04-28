@@ -99,6 +99,16 @@ export interface ProjectWithPhases extends Project {
   phases: PhaseWithTasks[]
 }
 
+export interface ProjectSeoMetric {
+  id: string
+  project_id: string
+  month: string
+  articles_count: number
+  gsc_traffic: number
+  created_at: string
+  updated_at: string
+}
+
 // ---- UI / Form Types ----
 
 export interface CreateProjectInput {
@@ -153,6 +163,18 @@ export interface UpdateTaskInput {
   is_reviewed?: boolean
 }
 
+export interface CreateProjectSeoMetricInput {
+  project_id: string
+  month: string
+  articles_count: number
+  gsc_traffic: number
+}
+
+export interface UpdateProjectSeoMetricInput {
+  articles_count?: number
+  gsc_traffic?: number
+}
+
 // ---- Status/Priority Labels (Vietnamese) ----
 
 export const STATUS_LABELS: Record<TaskStatus, string> = {
@@ -182,10 +204,10 @@ export const PRIORITY_COLORS: Record<TaskPriority, string> = {
 }
 
 export const KANBAN_COLUMNS: { id: TaskStatus; label: string; color: string }[] = [
-  { id: 'todo',        label: 'Cần làm',      color: 'border-gray-300' },
-  { id: 'in_progress', label: 'Đang xử lý',   color: 'border-blue-400' },
-  { id: 'in_review',   label: 'Chờ duyệt',    color: 'border-amber-400' },
-  { id: 'done',        label: 'Hoàn thành',   color: 'border-emerald-400' },
+  { id: 'todo', label: 'Cần làm', color: 'border-gray-300' },
+  { id: 'in_progress', label: 'Đang xử lý', color: 'border-blue-400' },
+  { id: 'in_review', label: 'Chờ duyệt', color: 'border-amber-400' },
+  { id: 'done', label: 'Hoàn thành', color: 'border-emerald-400' },
 ]
 
 export const DEFAULT_PHASE_NAMES = [

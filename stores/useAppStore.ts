@@ -3,8 +3,9 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'react-hot-toast'
 import type {
   Profile, Project, Phase, Task, TaskWithRelations,
-  PhaseWithTasks, ProjectWithPhases,
+  PhaseWithTasks, ProjectWithPhases, ProjectSeoMetric,
   CreateProjectInput, UpdateProjectInput, CreatePhaseInput, CreateTaskInput, UpdateTaskInput,
+  CreateProjectSeoMetricInput, UpdateProjectSeoMetricInput
 } from '@/types'
 
 const supabase = createClient()
@@ -43,6 +44,11 @@ interface AppState {
   moveTask: (taskId: string, newStatus: string) => Promise<void>
   approveTask: (taskId: string) => Promise<void>
   rejectTask: (taskId: string, reason: string) => Promise<void>
+
+  // SEO Metrics
+  seoMetrics: ProjectSeoMetric[]
+  fetchSeoMetrics: (projectId: string) => Promise<void>
+  upsertSeoMetric: (input: CreateProjectSeoMetricInput) => Promise<void>
 
   // UI state
   isLoading: boolean
@@ -104,24 +110,24 @@ export const useAppStore = create<AppState>()((set, get) => ({
       .update(input)
       .eq('id', id)
 
-    if (error) { 
+    if (error) {
       toast.error(`Lỗi cập nhật dự án: ${error.message}`)
       set({ error: error.message })
-      return 
+      return
     }
-    
+
     toast.success("Cập nhật dự án thành công!")
     await get().fetchProjects()
   },
 
   deleteProject: async (id, options) => {
     const { error } = await supabase.from('projects').delete().eq('id', id)
-    if (error) { 
+    if (error) {
       toast.error(`Lỗi xóa dự án: ${error.message}`)
       set({ error: error.message })
-      return 
+      return
     }
-    
+
     toast.success("Đã xóa dự án!")
     set((state) => ({ projects: state.projects.filter((p) => p.id !== id) }))
     if (options?.onSuccess) options.onSuccess()
@@ -228,11 +234,11 @@ export const useAppStore = create<AppState>()((set, get) => ({
     if (phaseId) query = query.eq('phase_id', phaseId)
 
     const { data, error } = await query
-    if (error) { 
+    if (error) {
       console.error("fetchTasksByProject error:", error)
       toast.error(error.message || "Lỗi không xác định từ Supabase")
       set({ error: error.message, isLoading: false })
-      return 
+      return
     }
     set({ tasks: (data ?? []) as TaskWithRelations[], isLoading: false })
   },
@@ -254,29 +260,29 @@ export const useAppStore = create<AppState>()((set, get) => ({
       .select()
       .single()
 
-    if (error) { 
+    if (error) {
       console.error("Create task database error:", error)
       toast.error(error.message)
       set({ error: error.message })
-      return null 
+      return null
     }
 
     // Refresh tasks for current project to ensure Kanban is up to date
     if (get().selectedProject) {
       await get().fetchTasksByProject(get().selectedProject!.id)
     }
-    
+
     return data
   },
 
   updateTask: async (id, input) => {
     const { error } = await supabase.from('tasks').update(input).eq('id', id)
-    if (error) { 
+    if (error) {
       toast.error(`Lỗi cập nhật task: ${error.message}`)
       set({ error: error.message })
-      return 
+      return
     }
-    
+
     toast.success("Cập nhật công việc thành công!")
     set((state) => ({
       tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...input } : t)),
@@ -332,10 +338,10 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
     const { error } = await supabase
       .from('tasks')
-      .update({ 
+      .update({
         status: 'in_progress',
         description: newDescription,
-        is_reviewed: false 
+        is_reviewed: false
       })
       .eq('id', taskId)
 
@@ -345,6 +351,42 @@ export const useAppStore = create<AppState>()((set, get) => ({
     }
 
     await get().fetchProjects()
+  },
+
+  // ---- SEO Metrics ----
+  seoMetrics: [],
+
+  fetchSeoMetrics: async (projectId) => {
+    const { data, error } = await supabase
+      .from('project_seo_metrics')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('month', { ascending: true })
+
+    if (error) { set({ error: error.message }); return }
+    set({ seoMetrics: data ?? [] })
+  },
+
+  upsertSeoMetric: async (input) => {
+    // Supabase upsert using unique constraint on (project_id, month)
+    const profile = get().profile
+    if (!profile) return
+
+    const { error } = await supabase
+      .from('project_seo_metrics')
+      .upsert(
+        { ...input, updated_at: new Date().toISOString() },
+        { onConflict: 'project_id,month' }
+      )
+
+    if (error) {
+      toast.error(`Lỗi cập nhật chỉ số SEO: ${error.message}`)
+      set({ error: error.message })
+      return
+    }
+
+    toast.success("Đã ghi nhận chỉ số SEO!")
+    await get().fetchSeoMetrics(input.project_id)
   },
 
   // ---- UI ----
